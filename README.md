@@ -4,7 +4,7 @@ A responsive website where students browse college events, search and filter the
 
 Frontend only. Event data comes from a local JSON file (`public/events.json`); there is no backend.
 
-**Live demo:** _add your deployed link here_
+**Live demo:** https://campus-events-eight.vercel.app/
 
 ## Features
 
