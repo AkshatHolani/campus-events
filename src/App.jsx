@@ -21,6 +21,25 @@ function idFromHash() {
   return match ? Number(match[1]) : null
 }
 
+// Copy text to the clipboard. Falls back to the older execCommand method
+// for browsers that block the Clipboard API.
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text)
+    return true
+  } catch {
+    const textarea = document.createElement('textarea')
+    textarea.value = text
+    textarea.style.position = 'fixed'
+    textarea.style.opacity = '0'
+    document.body.appendChild(textarea)
+    textarea.select()
+    const ok = document.execCommand('copy')
+    textarea.remove()
+    return ok
+  }
+}
+
 export default function App() {
   const { events, status, retry } = useEvents()
   const { theme, toggleTheme } = useTheme()
@@ -69,16 +88,16 @@ export default function App() {
   const shareEvent = useCallback(
     async (event) => {
       const url = `${window.location.origin}${window.location.pathname}#event-${event.id}`
-      try {
-        if (navigator.share) {
+      if (navigator.share) {
+        try {
           await navigator.share({ title: event.title, text: event.description, url })
           return
+        } catch (err) {
+          if (err.name === 'AbortError') return // user closed the share sheet
         }
-        await navigator.clipboard.writeText(url)
-        showToast('Link copied to clipboard')
-      } catch (err) {
-        if (err.name !== 'AbortError') showToast("Couldn't share, copy the URL from the address bar")
       }
+      const copied = await copyText(url)
+      showToast(copied ? 'Link copied to clipboard' : "Couldn't copy, use the URL in the address bar")
     },
     [showToast],
   )
